@@ -29,21 +29,27 @@ class Exercise3Fragment : BaseFragment() {
 
     private lateinit var getReputationEndpoint: GetReputationEndpoint
 
-    private var job: Job? = null
+    private var getReputationHasStarted: Boolean = false
+
+    private var startTimeInMillis: Long = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         getReputationEndpoint = compositionRoot.getReputationEndpoint
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         val view = inflater.inflate(R.layout.fragment_exercise_3, container, false)
 
         txtElapsedTime = view.findViewById(R.id.txt_elapsed_time)
 
         edtUserId = view.findViewById(R.id.edt_user_id)
         edtUserId.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 btnGetReputation.isEnabled = !s.isNullOrEmpty()
@@ -55,11 +61,15 @@ class Exercise3Fragment : BaseFragment() {
         btnGetReputation = view.findViewById(R.id.btn_get_reputation)
         btnGetReputation.setOnClickListener {
             logThreadInfo("button callback")
-            job = coroutineScope.launch {
-                btnGetReputation.isEnabled = false
+            btnGetReputation.isEnabled = false
+            getReputationHasStarted = true
+            startTimeInMillis = System.currentTimeMillis()
+            coroutineScope.launch {
                 val reputation = getReputationForUser(edtUserId.text.toString())
-                Toast.makeText(requireContext(), "reputation: $reputation", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "reputation: $reputation", Toast.LENGTH_SHORT)
+                    .show()
                 btnGetReputation.isEnabled = true
+                logThreadInfo("Elapsed time: ${getElapsedTime(startTimeInMillis)}")
             }
         }
 
@@ -68,8 +78,11 @@ class Exercise3Fragment : BaseFragment() {
 
     override fun onStop() {
         super.onStop()
-        job?.cancel()
-        btnGetReputation.isEnabled = true
+        coroutineScope.coroutineContext.cancelChildren()
+        if (getReputationHasStarted) {
+            btnGetReputation.isEnabled = true
+            logThreadInfo("Elapsed time: ${getElapsedTime(startTimeInMillis)}")
+        }
     }
 
     private suspend fun getReputationForUser(userId: String): Int {
@@ -83,9 +96,13 @@ class Exercise3Fragment : BaseFragment() {
         ThreadInfoLogger.logThreadInfo(message)
     }
 
+    private fun getElapsedTime(startTimeInMillis: Long) =
+        (System.currentTimeMillis() - startTimeInMillis) / MILLIS_PER_SEC
+
     companion object {
         fun newInstance(): Fragment {
             return Exercise3Fragment()
         }
+        private const val MILLIS_PER_SEC = 1000L
     }
 }
