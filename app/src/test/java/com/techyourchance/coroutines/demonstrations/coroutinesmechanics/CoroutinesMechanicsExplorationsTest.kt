@@ -112,7 +112,7 @@ class CoroutinesMechanicsExplorationsTest {
                 }
             }
             scope.launch(CoroutineName("my additional coroutine")) {
-                delay(150)
+                delay(250)
                 scopeJob.cancel()
             }
             job.join()
@@ -129,7 +129,7 @@ class CoroutinesMechanicsExplorationsTest {
             val job = scope.launch(CoroutineName("my coroutine") + Dispatchers.Default) {
                 try {
                     delay(100)
-                    withContext(NonCancellable + CoroutineName("withContext") + Dispatchers.IO) {
+                    withContext(CoroutineName("withContext") + Dispatchers.IO) {
                         try {
                             printJobsHierarchy(scopeJob)
                             delay(100)

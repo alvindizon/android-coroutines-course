@@ -14,6 +14,9 @@ object TestUtils {
     }
 
     fun printJobsHierarchy(job: Job, nestLevel: Int = 0) {
+        if (nestLevel == 0) {
+            println()
+        }
         val indent = "    ".repeat(nestLevel)
         println("$indent- $job")
         for (childJob in job.children) {
