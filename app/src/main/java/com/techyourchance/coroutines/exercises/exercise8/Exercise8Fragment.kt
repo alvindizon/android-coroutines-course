@@ -43,7 +43,11 @@ class Exercise8Fragment : BaseFragment() {
             logThreadInfo("button callback")
 
             val updateElapsedTimeJob = coroutineScope.launch {
-                updateElapsedTime()
+                try {
+                    updateElapsedTime()
+                } catch (e: CancellationException) {
+                    logThreadInfo("updateElapsedTimeJob cancelled")
+                }
             }
 
             coroutineScope.launch {
@@ -52,8 +56,14 @@ class Exercise8Fragment : BaseFragment() {
                     fetchAndCacheUsersUseCase.fetchAndCacheUsers(userIds)
                     updateElapsedTimeJob.cancel()
                 } catch (e: CancellationException) {
-                    updateElapsedTimeJob.cancelAndJoin()
-                    txtElapsedTime.text = ""
+                    logThreadInfo("useCase job cancelled")
+                    try {
+                        updateElapsedTimeJob.cancelAndJoin()
+                    } catch (e: CancellationException) {
+                        logThreadInfo("cancel and join cancelled")
+                        // fix for bug: cancelAndJoin throws exception if job is already cancelled
+                        txtElapsedTime.text = ""
+                    }
                 } finally {
                     btnFetch.isEnabled = true
                 }
