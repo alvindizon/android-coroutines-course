@@ -14,10 +14,13 @@ class FetchAndCacheUsersUseCaseExercise9(
 ) {
 
     suspend fun fetchAndCacheUsers(userIds: List<String>) = withContext(Dispatchers.Default) {
-        for (userId in userIds) {
-            val user = getUserEndpoint.getUser(userId)
-            usersDao.upsertUserInfo(user)
-        }
+        userIds.map {
+            async {
+                val user = getUserEndpoint.getUser(it)
+                usersDao.upsertUserInfo(user)
+                user
+            }
+        }.awaitAll()
     }
 
 }
