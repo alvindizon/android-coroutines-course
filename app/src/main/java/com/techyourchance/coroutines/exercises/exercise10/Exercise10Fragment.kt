@@ -21,7 +21,13 @@ import java.lang.Exception
 
 class Exercise10Fragment : BaseFragment() {
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate)
+    private val supervisorJob = SupervisorJob()
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ ->
+        println("Caught exception")
+    }
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + supervisorJob + coroutineExceptionHandler)
 
     override val screenTitle get() = ScreenReachableFromHome.EXERCISE_10.description
 
